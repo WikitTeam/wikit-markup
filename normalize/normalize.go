@@ -32,6 +32,8 @@ var spaces = regexp.MustCompile(`[ \t\r\n\f]+`)
 
 // HTML rewrites HTML into a canonical form.
 // This is a tokenizer.
+// it does not repair broken HTML, so structural differences
+// (such as missing Tidy fixes) stay visble in the comparison
 func HTML(s string) string {
 	var toks []html.Token
 	z := html.NewTokenizer(strings.NewReader(s))

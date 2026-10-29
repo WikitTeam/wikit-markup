@@ -19,6 +19,9 @@ func TestHTML(t *testing.T) {
 		{"pre keeps whitespace", "<pre>a\n  b</pre>", "<pre>a\n  b</pre>"},
 		{"comments dropped", "a<!-- x -->b", "ab"},
 		{"upper case tags", "<P CLASS=a>x</P>", `<p class="a">x</p>`},
+		{"random bibcite id", `<a id="bibcite-1-11950a">1</a>`, `<a id="bibcite-1-X">1</a>`},
+		{"random tabview id", `<div id="wiki-tabview-27fd0caa4659a85a5bbcaf5ef236520b"></div><script>new TabView('wiki-tabview-27fd0caa4659a85a5bbcaf5ef236520b')</script>`, `<div id="wiki-tabview-X"></div>
+<script>new TabView('wiki-tabview-X')</script>`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

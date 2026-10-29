@@ -28,6 +28,28 @@ var voidTags = map[string]bool{
 	"source": true, "track": true, "wbr": true,
 }
 
+// randomIDs用于替换掉Wikidot的输出中的随机ID，将他们统一为一个占位符，防止比较时误判
+var randomIDs = []struct {
+	re   *regexp.Regexp
+	repl string
+}{
+	// [[html]] blocks become iframes whose src ends in a content hash
+	{regexp.MustCompile(`/html/[0-9a-f]+-\d+`), "/html/X"},
+	// [[tabview]] ids: wiki-tabview-<xxxxx> and tabView<xxxx>
+	{regexp.MustCompile(`(wiki-tabview-|tabView)[0-9a-f]{32}`), "${1}X"},
+	// statics files with a hash in the CDN: ..../v--c5ce02208cf9/...
+	{regexp.MustCompile(`/v--[0-9a-f]+/`), "/v--X/"},
+	// [((bibcite x))] like this: bibcite-1-11950a
+	{regexp.MustCompile(`(bibcite-\d+)-[0-9a-f]+`), "$1-X"},
+}
+
+func unrandom(s string) string {
+	for _, r := range randomIDs {
+		s = r.re.ReplaceAllString(s, r.repl)
+	}
+	return s
+}
+
 var spaces = regexp.MustCompile(`[ \t\r\n\f]+`)
 
 // HTML rewrites HTML into a canonical form.
@@ -57,7 +79,7 @@ func HTML(s string) string {
 				b.WriteString(escapeText(t.Data))
 				continue
 			}
-			text := spaces.ReplaceAllString(t.Data, " ")
+			text := unrandom(spaces.ReplaceAllString(t.Data, " "))
 			if inRawText(toks, i) {
 				b.WriteString(strings.TrimSpace(text))
 				continue
@@ -128,7 +150,7 @@ func writeTag(b *strings.Builder, t html.Token) {
 	})
 	b.WriteString("<" + t.Data)
 	for _, a := range attrs {
-		val := strings.TrimSpace(spaces.ReplaceAllString(a.Val, " "))
+		val := unrandom(strings.TrimSpace(spaces.ReplaceAllString(a.Val, " ")))
 		b.WriteString(" " + a.Key + `="` + html.EscapeString(val) + `"`)
 	}
 	b.WriteString(">")
